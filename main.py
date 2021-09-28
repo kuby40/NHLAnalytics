@@ -1,72 +1,108 @@
 import requests
 import json
-import sys
+from Forward import Forward
+from Goalie import Goalie
 
+# CONSTANTS FOR POINTS
+GOALS = 1
+ASSISTS = 1
+PLUS_MINUS = 0.1
+POWER_PLAY_POINTS = 1
+SHORT_HANDED_POINTS = 1
+GAME_WINNING_GOALS = 2
+SHOTS = 0.1
+HITS = 0.1
+BLOCKS = 0.1
+WINS = 2
+GOALS_AGAINST = -3
+SAVES = 0.1
+SHUTOUTS = 5
+
+# ARRAYS
 team_dict = {}
 player_array = []
 stats_array = []
-player_projected_points = []
+forward_array = []
+defence_array = []
+goalie_array = []
 
 
-def get_player_projected_points(player):
-    projection = 0
-    if "goals" in player[1]["stats"][0]["splits"][0]["stat"]:
-        projection += player[1]["stats"][0]["splits"][0]["stat"]["goals"]
-        projection += player[1]["stats"][0]["splits"][0]["stat"]["assists"]
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["plusMinus"] * 0.1)
-        projection += player[1]["stats"][0]["splits"][0]["stat"]["powerPlayPoints"]
-        projection += player[1]["stats"][0]["splits"][0]["stat"]["shortHandedPoints"]
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["gameWinningGoals"] * 2)
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["shots"] * 0.1)
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["hits"] * 0.1)
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["blocked"] * 0.1)
-    elif "wins" in player[1]["stats"][0]["splits"][0]["stat"]:
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["wins"] * 5)
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["goalsAgainst"] * -3)
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["saves"] * 0.6)
-        projection += (player[1]["stats"][0]["splits"][0]["stat"]["shutouts"] * 5)
-    player_projected_points.append([round(projection, 1), player[0]])
+def write_to_file():
+    forward_array.sort(key=lambda x: x.projected_points, reverse=True)
+    defence_array.sort(key=lambda x: x.projected_points, reverse=True)
+    goalie_array.sort(key=lambda x: x.projected_points, reverse=True)
+
+    f = open("forwards.txt", "w")
+    for player in forward_array:
+        f.write(f"{player.name}\t{player.projected_points}\n")
+    f.close()
+    f = open("defence.txt", "w")
+    for player in defence_array:
+        f.write(f"{player.name}\t{player.projected_points}\n")
+    f.close()
+    f = open("goalie.txt", "w")
+    for player in goalie_array:
+        f.write(f"{player.name}\t{player.projected_points}\n")
+    f.close()
 
 
 def get_teams_players():
+    print("Getting all teams players...")
     for i in range(1, 70):
         response = requests.get(f"https://statsapi.web.nhl.com/api/v1/teams/{i}?expand=team.roster")
         team_dict[i] = json.loads(json.dumps(response.json()))
-    return True
+    for i in range(1, 50):
+        try:
+            for x in range(0, 50):
+                player = (team_dict[i]["teams"][0]["roster"]["roster"][x]["person"]["fullName"],
+                          team_dict[i]["teams"][0]["roster"]["roster"][x]["person"]["link"],
+                          team_dict[i]["teams"][0]["roster"]["roster"][x]["position"]["type"])
+                player_array.append(player)
+        except (KeyError, IndexError):
+            continue
+
+
+def create_players():
+    for player in player_array:
+        response = requests.get(f"https://statsapi.web.nhl.com{player[1]}/stats?stats=statsSingleSeason"
+                                f"&season=20202021")
+        temp = json.loads(json.dumps(response.json()))
+        if player[2] != "Goalie":
+            try:
+                skater = Forward(player[0], player[2], temp["stats"][0]["splits"][0]["stat"]["goals"],
+                                 temp["stats"][0]["splits"][0]["stat"]["assists"],
+                                 temp["stats"][0]["splits"][0]["stat"]["plusMinus"],
+                                 temp["stats"][0]["splits"][0]["stat"]["powerPlayPoints"],
+                                 temp["stats"][0]["splits"][0]["stat"]["shortHandedPoints"],
+                                 temp["stats"][0]["splits"][0]["stat"]["gameWinningGoals"],
+                                 temp["stats"][0]["splits"][0]["stat"]["shots"],
+                                 temp["stats"][0]["splits"][0]["stat"]["hits"],
+                                 temp["stats"][0]["splits"][0]["stat"]["blocked"])
+                print("Player " + skater.name + " created")
+                if player[2] == "Defenseman":
+                    defence_array.append(skater)
+                else:
+                    forward_array.append(skater)
+            except IndexError:
+                print("Player " + player[0] + " has no relevant data.. SKIPPING")
+                continue
+        else:
+            try:
+                skater = Goalie(player[0], player[2], temp["stats"][0]["splits"][0]["stat"]["wins"],
+                                temp["stats"][0]["splits"][0]["stat"]["goalsAgainst"],
+                                temp["stats"][0]["splits"][0]["stat"]["saves"],
+                                temp["stats"][0]["splits"][0]["stat"]["shutouts"])
+                print("Player " + skater.name + " created")
+                goalie_array.append(skater)
+            except IndexError:
+                print("Player " + player[0] + " has no relevant data.. SKIPPING")
+                continue
 
 
 def main():
     get_teams_players()
-    for i in range(1, 50):
-        # try:
-        #     print("*" * 50)
-        #     print(team_dict[i]["teams"][0]["name"])
-        #     print("*" * 50)
-        # except (KeyError, IndexError):
-        #     continue
-        try:
-            for x in range(0, 50):
-                print(team_dict[i]["teams"][0]["roster"]["roster"][x]["person"]["fullName"], "->",
-                      team_dict[i]["teams"][0]["roster"]["roster"][x]["person"]["link"], sep=" ")
-                player_array.append((team_dict[i]["teams"][0]["roster"]["roster"][x]["person"]["fullName"],
-                                     team_dict[i]["teams"][0]["roster"]["roster"][x]["person"]["link"]))
-        except (KeyError, IndexError):
-            print("TEAM DONE")
-            continue
-    # print(team_dict[1]["teams"][0]["active"])
-    for key, value in player_array:
-        # print(key, value)
-        response = requests.get(f"https://statsapi.web.nhl.com{value}/stats?stats=statsSingleSeason"
-                                f"&season=20202021")
-        stats_array.append([key, json.loads(json.dumps(response.json()))])
-    for player in stats_array:
-        try:
-            # print(player[0], player[1]["stats"][0]["splits"][0]["stat"], sep=" -> ")
-            get_player_projected_points(player)
-        except IndexError:
-            continue
-    for key, value in sorted(player_projected_points, reverse=True):
-        print(key, value)
+    create_players()
+    write_to_file()
 
 
 if __name__ == '__main__':
