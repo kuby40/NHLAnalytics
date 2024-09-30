@@ -1,7 +1,7 @@
 # Points per:
-WINS = 2
+WINS = 5
 GOALS_AGAINST = -3
-SAVES = 0.1
+SAVES = 0.6
 SHUTOUTS = 5
 
 

@@ -1,27 +1,29 @@
 # Points per:
-GOALS = 1
-ASSISTS = 1
-PLUS_MINUS = 0.1
-POWER_PLAY_POINTS = 1
-SHORT_HANDED_POINTS = 1
-GAME_WINNING_GOALS = 2
-SHOTS = 0.1
-HITS = 0.1
-BLOCKS = 0.1
+GOALS = 6
+ASSISTS = 4
+PLUS_MINUS = 2
+POWER_PLAY_POINTS = 2
+SHORT_HANDED_POINTS = 2
+# GAME_WINNING_GOALS = 2
+SHOTS = 0.5
+HITS = 0.5
+BLOCKS = 0.5
 
 
 class Forward:
 
-    def __init__(self, name, position, goals, assists, plus_minus, power_play_points, shorthanded_goals,
-                 game_winning_goals, shots_on_goal, hits, blocks, games_played):
+    def __init__(self, name, position, goals, assists, plus_minus, power_play_points, shorthanded_points,
+                 shots_on_goal, hits, blocks, games_played,
+                 #game_winning_goals
+                 ):
         self.name = name
         self.position = position
         self.goals = goals
         self.assists = assists
         self.plus_minus = plus_minus
         self.power_play_points = power_play_points
-        self.shorthanded_goals = shorthanded_goals
-        self.game_winning_goals = game_winning_goals
+        self.shorthanded_points = shorthanded_points
+        #self.game_winning_goals = game_winning_goals
         self.shots_on_goal = shots_on_goal
         self.hits = hits
         self.blocks = blocks
@@ -35,8 +37,8 @@ def get_projected_points(self):
     self.projected_points += (self.assists * ASSISTS)
     self.projected_points += (self.plus_minus * PLUS_MINUS)
     self.projected_points += (self.power_play_points * POWER_PLAY_POINTS)
-    self.projected_points += (self.shorthanded_goals * SHORT_HANDED_POINTS)
-    self.projected_points += (self.game_winning_goals * GAME_WINNING_GOALS)
+    self.projected_points += (self.shorthanded_points * SHORT_HANDED_POINTS)
+    #self.projected_points += (self.game_winning_goals * GAME_WINNING_GOALS)
     self.projected_points += (self.shots_on_goal * SHOTS)
     self.projected_points += (self.hits * HITS)
     self.projected_points += (self.blocks * BLOCKS)
