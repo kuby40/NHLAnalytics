@@ -63,7 +63,8 @@ def create_players(player_array):
                     break
             filtered_temp = [d for d in temp["seasonTotals"] if d["season"] == 20232024 and d["leagueAbbrev"] == "NHL" and d["gameTypeId"] == 2]
             try:
-                skater = Forward(player["firstName"]["default"] + " " + player["lastName"]["default"], player["positionCode"], filtered_temp[0]["goals"],
+                if(filtered_temp[0]["gamesPlayed"] > 5):
+                    skater = Forward(player["firstName"]["default"] + " " + player["lastName"]["default"], player["positionCode"], filtered_temp[0]["goals"],
                                  filtered_temp[0]["assists"],
                                  filtered_temp[0]["plusMinus"],
                                  filtered_temp[0]["powerPlayPoints"],
@@ -72,6 +73,8 @@ def create_players(player_array):
                                  playerStats["data"][playerStatsFoundIndex]["hits"],
                                  playerStats["data"][playerStatsFoundIndex]["blockedShots"],
                                  filtered_temp[0]["gamesPlayed"])
+                else:
+                    raise IndexError
                 print("Player " + skater.name + " created")
                 if player["positionCode"] == "D":
                     defense_array.append(skater)
@@ -87,11 +90,14 @@ def create_players(player_array):
                     playerStatsFoundIndex = index
                     break
             try:
-                skater = Goalie(player["firstName"]["default"] + " " + player["lastName"]["default"], player["positionCode"], goalieStats["data"][playerStatsFoundIndex]["wins"],
+                if(goalieStats["data"][playerStatsFoundIndex]["gamesPlayed"] > 5):
+                    skater = Goalie(player["firstName"]["default"] + " " + player["lastName"]["default"], player["positionCode"], goalieStats["data"][playerStatsFoundIndex]["wins"],
                                 goalieStats["data"][playerStatsFoundIndex]["goalsAgainst"],
                                 goalieStats["data"][playerStatsFoundIndex]["saves"],
                                 goalieStats["data"][playerStatsFoundIndex]["shutouts"],
                                 goalieStats["data"][playerStatsFoundIndex]["gamesPlayed"])
+                else:
+                    raise IndexError
                 print("Player " + skater.name + " created")
                 goalie_array.append(skater)
             except IndexError:
